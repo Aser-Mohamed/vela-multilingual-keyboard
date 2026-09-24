@@ -1,0 +1,64 @@
+<import name="custom-keyboard" src="../../components/Keyboard.ux"></import>
+
+<template>
+  <stack class="page">
+    <div class="out-wrap" style="bottom: {{ outBottom }}px;">
+      <text class="out">{{ display }}</text>
+    </div>
+    <custom-keyboard
+      is-visible="{{ kbVisible }}"
+      cancel-label="Cancel"
+      @keypress="onKeyPress"
+      @delete="onDelete"
+      @heightchange="onKeyboardHeight"
+      @close="onClose"
+    ></custom-keyboard>
+  </stack>
+</template>
+
+<style>
+.page { width: 100%; height: 100%; background-color: #000000; }
+.out-wrap { position: absolute; left: 0; width: 100%; flex-direction: row; justify-content: center; }
+.out { color: #f2f2f5; font-size: 28px; lines: 1; text-overflow: clip; text-align: center; width: 70%; }
+</style>
+
+<script>
+import router from "@system.router"
+
+export default {
+  private: {
+    text: "",
+    display: "",
+    kbVisible: true,
+    outBottom: 220
+  },
+
+  refresh() {
+    // Show only the tail so long text never overflows the round screen.
+    const max = 18
+    this.display = this.text.length > max ? this.text.substring(this.text.length - max) : this.text
+  },
+
+  onKeyPress(e) {
+    const value = e && e.detail ? e.detail.value : e ? e.value : ""
+    if (!value) return
+    this.text += value
+    this.refresh()
+  },
+
+  onDelete() {
+    if (!this.text.length) return
+    this.text = this.text.slice(0, -1)
+    this.refresh()
+  },
+
+  onKeyboardHeight(e) {
+    const h = e && e.detail ? e.detail.value : e ? e.value : 0
+    if (h) this.outBottom = h + 8
+  },
+
+  onClose() {
+    router.back()
+  }
+}
+</script>

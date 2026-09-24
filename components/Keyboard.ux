@@ -1,0 +1,1018 @@
+<template>
+  <div class="kb" if="{{ isVisible && layoutReady }}" style="height: {{ kbH }}px;">
+    <!-- ==================== ROUND BEZEL ====================
+         Absolute geometry lifted from the Vela IME's 480x321 circle keyboard
+         and scaled to the device. Every offset below comes from computeLayout(). -->
+    <div class="layer" if="{{ isCircle && !isLangMenuOpen }}">
+      <!-- Toolbar: language pill | mode bar (+ dismiss chevron) | delete -->
+      <image
+        class="abs"
+        src="./keyboard-assets/pill-lang.png"
+        style="top: {{ tbY }}px; left: {{ langX }}px; width: {{ langW }}px; height: {{ tbH }}px;"
+        @click="handleAction('lang')"
+      ></image>
+      <text
+        class="abs pill-lab"
+        style="top: {{ tbY }}px; left: {{ langX }}px; width: {{ langW }}px; height: {{ tbH }}px; line-height: {{ tbH }}px; font-size: {{ tbFs }}px;"
+        @click="handleAction('lang')"
+      >
+        {{ currentLang }}
+      </text>
+
+      <div
+        class="abs mode-bar"
+        style="top: {{ tbY }}px; left: {{ barX }}px; width: {{ barW }}px; height: {{ tbH }}px;"
+        @click="handleAction('mode')"
+      ></div>
+      <image
+        if="{{ !isSymbols }}"
+        class="abs"
+        src="./keyboard-assets/123_boardless.png"
+        style="top: {{ numY }}px; left: {{ numX }}px; width: {{ numW }}px; height: {{ numH }}px;"
+        @click="handleAction('mode')"
+      ></image>
+      <text
+        if="{{ isSymbols }}"
+        class="abs pill-lab"
+        style="top: {{ tbY }}px; left: {{ barX }}px; width: {{ barW }}px; height: {{ tbH }}px; line-height: {{ tbH }}px; font-size: {{ tbFs }}px;"
+        @click="handleAction('mode')"
+      >
+        ABC
+      </text>
+      <!-- The dismiss chevron sits geometrically INSIDE the mode bar's rect.
+           It only receives taps because it is declared after the bar, so later
+           siblings win the hit test — keep it below the mode-bar elements. -->
+      <image
+        class="abs"
+        src="./keyboard-assets/down.png"
+        style="top: {{ closeY }}px; left: {{ closeX }}px; width: {{ closeS }}px; height: {{ closeS }}px;"
+        @click="handleAction('close')"
+      ></image>
+
+      <image
+        class="abs"
+        src="./keyboard-assets/del.png"
+        style="top: {{ tbY }}px; left: {{ delX }}px; width: {{ langW }}px; height: {{ tbH }}px;"
+        @click="handleAction('delete')"
+      ></image>
+
+      <!-- Row 1 — outer keys are bezel-hugging shapes, labels ride on top -->
+      <div
+        class="krow"
+        style="top: {{ rowY[0] }}px; left: {{ rowX[0] }}px; width: {{ rowW[0] }}px; height: {{ rowH }}px;"
+      >
+        <image
+          src="./keyboard-assets/edge-l1.png"
+          style="width: {{ edgeW[0] }}px; height: {{ rowH }}px; margin-right: {{ gap }}px;"
+          @click="handleKey(edgeL[0])"
+        ></image>
+        <text
+          class="kkey"
+          for="{{ item in mids[0] }}"
+          style="width: {{ keyW[0] }}px; height: {{ rowH }}px; line-height: {{ rowH }}px; font-size: {{ keyFs[0] }}px; margin-right: {{ gap }}px;"
+          @click="handleKey(item)"
+        >
+          {{ item }}
+        </text>
+        <image
+          src="./keyboard-assets/edge-r1.png"
+          style="width: {{ edgeW[0] }}px; height: {{ rowH }}px;"
+          @click="handleKey(edgeR[0])"
+        ></image>
+        <text
+          class="klab"
+          style="left: {{ labL[0] }}px; width: {{ labW }}px; height: {{ rowH }}px; line-height: {{ rowH }}px; font-size: {{ keyFs[0] }}px;"
+          @click="handleKey(edgeL[0])"
+        >
+          {{ edgeL[0] }}
+        </text>
+        <text
+          class="klab"
+          style="left: {{ labR[0] }}px; width: {{ labW }}px; height: {{ rowH }}px; line-height: {{ rowH }}px; font-size: {{ keyFs[0] }}px;"
+          @click="handleKey(edgeR[0])"
+        >
+          {{ edgeR[0] }}
+        </text>
+      </div>
+
+      <!-- Row 2 -->
+      <div
+        class="krow"
+        style="top: {{ rowY[1] }}px; left: {{ rowX[1] }}px; width: {{ rowW[1] }}px; height: {{ rowH }}px;"
+      >
+        <image
+          src="./keyboard-assets/edge-l2.png"
+          style="width: {{ edgeW[1] }}px; height: {{ rowH }}px; margin-right: {{ gap }}px;"
+          @click="handleKey(edgeL[1])"
+        ></image>
+        <text
+          class="kkey"
+          for="{{ item in mids[1] }}"
+          style="width: {{ keyW[1] }}px; height: {{ rowH }}px; line-height: {{ rowH }}px; font-size: {{ keyFs[1] }}px; margin-right: {{ gap }}px;"
+          @click="handleKey(item)"
+        >
+          {{ item }}
+        </text>
+        <image
+          src="./keyboard-assets/edge-r2.png"
+          style="width: {{ edgeW[1] }}px; height: {{ rowH }}px;"
+          @click="handleKey(edgeR[1])"
+        ></image>
+        <text
+          class="klab"
+          style="left: {{ labL[1] }}px; width: {{ labW }}px; height: {{ rowH }}px; line-height: {{ rowH }}px; font-size: {{ keyFs[1] }}px;"
+          @click="handleKey(edgeL[1])"
+        >
+          {{ edgeL[1] }}
+        </text>
+        <text
+          class="klab"
+          style="left: {{ labR[1] }}px; width: {{ labW }}px; height: {{ rowH }}px; line-height: {{ rowH }}px; font-size: {{ keyFs[1] }}px;"
+          @click="handleKey(edgeR[1])"
+        >
+          {{ edgeR[1] }}
+        </text>
+      </div>
+
+      <!-- Row 3 -->
+      <div
+        class="krow"
+        style="top: {{ rowY[2] }}px; left: {{ rowX[2] }}px; width: {{ rowW[2] }}px; height: {{ rowH }}px;"
+      >
+        <image
+          src="./keyboard-assets/edge-l3.png"
+          style="width: {{ edgeW[2] }}px; height: {{ rowH }}px; margin-right: {{ gap }}px;"
+          @click="handleKey(edgeL[2])"
+        ></image>
+        <text
+          class="kkey"
+          for="{{ item in mids[2] }}"
+          style="width: {{ keyW[2] }}px; height: {{ rowH }}px; line-height: {{ rowH }}px; font-size: {{ keyFs[2] }}px; margin-right: {{ gap }}px;"
+          @click="handleKey(item)"
+        >
+          {{ item }}
+        </text>
+        <image
+          src="./keyboard-assets/edge-r3.png"
+          style="width: {{ edgeW[2] }}px; height: {{ rowH }}px;"
+          @click="handleKey(edgeR[2])"
+        ></image>
+        <text
+          class="klab"
+          style="left: {{ labL[2] }}px; width: {{ labW }}px; height: {{ rowH }}px; line-height: {{ rowH }}px; font-size: {{ keyFs[2] }}px;"
+          @click="handleKey(edgeL[2])"
+        >
+          {{ edgeL[2] }}
+        </text>
+        <text
+          class="klab"
+          style="left: {{ labR[2] }}px; width: {{ labW }}px; height: {{ rowH }}px; line-height: {{ rowH }}px; font-size: {{ keyFs[2] }}px;"
+          @click="handleKey(edgeR[2])"
+        >
+          {{ edgeR[2] }}
+        </text>
+      </div>
+
+      <!-- Bottom row: shift (or comma where the script has no case) + space -->
+      <image
+        if="{{ capsMode === 'off' }}"
+        class="abs"
+        src="./keyboard-assets/A.png"
+        style="top: {{ botY }}px; left: {{ capsX }}px; width: {{ botW }}px; height: {{ botH }}px;"
+        @click="handleAction('caps')"
+      ></image>
+      <image
+        if="{{ capsMode === 'on' }}"
+        class="abs"
+        src="./keyboard-assets/bigA.png"
+        style="top: {{ botY }}px; left: {{ capsX }}px; width: {{ botW }}px; height: {{ botH }}px;"
+        @click="handleAction('caps')"
+      ></image>
+      <image
+        if="{{ capsMode === 'none' }}"
+        class="abs"
+        src="./keyboard-assets/bottom-l.png"
+        style="top: {{ botY }}px; left: {{ capsX }}px; width: {{ botW }}px; height: {{ botH }}px;"
+        @click="handleKey(commaChar)"
+      ></image>
+      <text
+        if="{{ capsMode === 'none' }}"
+        class="klab"
+        style="top: {{ botY }}px; left: {{ botLabX }}px; width: {{ labW }}px; height: {{ botH }}px; line-height: {{ botH }}px; font-size: {{ tbFs }}px;"
+        @click="handleKey(commaChar)"
+      >
+        {{ commaChar }}
+      </text>
+
+      <image
+        class="abs"
+        src="./keyboard-assets/space.png"
+        style="top: {{ botY }}px; left: {{ spaceX }}px; width: {{ botW }}px; height: {{ botH }}px;"
+        @click="handleAction('space')"
+      ></image>
+    </div>
+
+    <!-- ==================== SQUARE / PILL SCREENS ====================
+         A port of the native Vela IME's `rect` board (its "方屏67" layer), not a
+         reflow of the round one. All three letter rows live inside a *single*
+         horizontal `<scroll>`, with a `<progress>` bar beneath them acting as
+         the scroll indicator, and a four-key control strip (language / caps /
+         123 / delete) pinned above them.
+
+         Keys are a fixed 60px: the native never resizes them to make an
+         alphabet fit, it lets the row run past the right edge and scroll, which
+         is what lets a 13-key Russian row keep an English row's touch target.
+         The row indents (0 / 32 / 64px), the -5px row overlap, the 82px scroll
+         offset and the -11px wrapper lift are all the native's numbers. -->
+    <div class="layer r67-board" if="{{ !isCircle && !isLangMenuOpen }}">
+      <div class="r67-wrap">
+        <progress class="r67-bar" percent="{{ rPercent }}"></progress>
+        <scroll class="r67-scroll" scroll-x="{{ true }}" onscroll="onRectScroll">
+          <div class="r67-cols">
+            <div class="r67-row" style="margin-left: 0px; margin-top: 0px">
+              <text class="r67-key" for="{{ item in rows[0] }}" @click="handleKey(item)">
+                {{ item }}
+              </text>
+            </div>
+            <div class="r67-row" style="margin-left: 32px; margin-top: -5px">
+              <text class="r67-key" for="{{ item in rows[1] }}" @click="handleKey(item)">
+                {{ item }}
+              </text>
+            </div>
+            <div class="r67-row" style="margin-left: 64px; margin-top: -5px">
+              <text class="r67-key" for="{{ item in rows[2] }}" @click="handleKey(item)">
+                {{ item }}
+              </text>
+              <image
+                class="r67-ico"
+                src="./keyboard-assets/h-space.png"
+                @click="handleAction('space')"
+              ></image>
+              <image
+                class="r67-ico"
+                src="./keyboard-assets/down.png"
+                @click="handleAction('close')"
+              ></image>
+            </div>
+          </div>
+        </scroll>
+      </div>
+
+      <!-- Control strip. Native artwork wherever it exists. Two substitutions:
+           the language key falls back to a text pill at the same metrics
+           (the native only ships images for its own en / cn / jp), and Arabic,
+           having no case, puts the comma in the caps slot — the same swap the
+           round layer makes.
+
+           The symbols layer collapses the strip to back + delete, as the native
+           does; it keeps `del.png` rather than the native's `del2.png`, which is
+           the only rect asset whose intrinsic size the native never states. -->
+      <div class="r67-ctl">
+        <image
+          class="r67-ctl-lang-ico"
+          if="{{ !isSymbols && currentLang === 'EN' }}"
+          src="./keyboard-assets/h-en.png"
+          @click="handleAction('lang')"
+        ></image>
+        <text
+          class="r67-ctl-lang"
+          if="{{ !isSymbols && currentLang !== 'EN' }}"
+          @click="handleAction('lang')"
+        >
+          {{ rLangLabel }}
+        </text>
+
+        <image
+          class="r67-ctl-wide"
+          if="{{ !isSymbols && capsMode === 'on' }}"
+          src="./keyboard-assets/h-bigA.png"
+          @click="handleAction('caps')"
+        ></image>
+        <image
+          class="r67-ctl-wide"
+          if="{{ !isSymbols && capsMode === 'off' }}"
+          src="./keyboard-assets/h-a.png"
+          @click="handleAction('caps')"
+        ></image>
+        <text
+          class="r67-ctl-pill"
+          if="{{ !isSymbols && capsMode === 'none' }}"
+          @click="handleKey(commaChar)"
+        >
+          {{ commaChar }}
+        </text>
+
+        <image
+          class="r67-ctl-wide"
+          if="{{ !isSymbols }}"
+          src="./keyboard-assets/h-123.png"
+          @click="handleAction('mode')"
+        ></image>
+        <image
+          class="r67-ctl-back"
+          if="{{ isSymbols }}"
+          src="./keyboard-assets/h-back2.png"
+          @click="handleAction('mode')"
+        ></image>
+
+        <image
+          class="r67-ctl-ico"
+          src="./keyboard-assets/h-del.png"
+          @click="handleAction('delete')"
+        ></image>
+      </div>
+    </div>
+
+    <!-- ==================== LANGUAGE PICKER ==================== -->
+    <div class="layer lang-overlay" if="{{ isLangMenuOpen }}">
+      <div class="lang-grid">
+        <text
+          class="{{ currentLang === item ? 'lang-pill lang-on' : 'lang-pill' }}"
+          for="{{ item in langCodes }}"
+          @click="selectLang(item)"
+        >
+          {{ item }}
+        </text>
+      </div>
+      <text class="lang-cancel" @click="handleLangClose">{{ cancelLabel }}</text>
+    </div>
+  </div>
+</template>
+
+<style>
+/* No `overflow: hidden` here — Vela has no overflow property and strips it,
+   so it was never clipping anything. Every layer is sized within kbH instead. */
+.kb {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #000000;
+}
+.layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+.abs {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Key rows flow left-to-right; their box is sized to the content so the
+     absolutely positioned edge labels line up with the artwork underneath. */
+.krow {
+  position: absolute;
+  flex-direction: row;
+}
+.kkey {
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+  background-color: #262626;
+  border-radius: 12px;
+  border-width: 3px;
+  border-color: #333333;
+}
+/* Label drawn over a bezel-shaped key image. */
+.klab {
+  position: absolute;
+  top: 0;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+}
+.mode-bar {
+  background-color: #262626;
+  border-radius: 12px;
+  border-width: 3px;
+  border-color: #333333;
+}
+.pill-lab {
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* --- square / pill screens: the native `rect` board, measurement for
+     measurement. Nothing here is derived from the screen: the native pins the
+     board to 255px tall with 60px keys at any rect width and lets long rows
+     overflow into the scroll. --- */
+.r67-board {
+  flex-direction: column;
+}
+.r67-wrap {
+  position: absolute;
+  left: 0;
+  top: -11px;
+  width: 100%;
+  height: 276px;
+  justify-content: center;
+}
+/* The scroll indicator: a plain progress bar, not a scrollbar — `<scroll>`
+     has no scrollbar of its own. It rests at the visible fraction of the row
+     and fills to 100% at the far end (see onRectScroll). */
+.r67-bar {
+  position: absolute;
+  bottom: 12px;
+  width: 80px;
+  color: #ffffff;
+  stroke-width: 6px;
+  layer-color: #262626;
+}
+.r67-scroll {
+  position: absolute;
+  left: 0;
+  top: 82px;
+  width: 100%;
+  height: 170px;
+}
+/* margin-left, not left: this box is in normal flow, and `left` on a static
+     element is silently ignored. computeRectLayout() adds RECT_ROW_LEFT into
+     contentW on the assumption that the inset is real, so as `left` it was
+     skewing the scroll indicator's ratio by 6px as well as not indenting. */
+.r67-cols {
+  margin-left: 6px;
+  flex-direction: column;
+}
+.r67-row {
+  height: 60px;
+}
+/* flex-shrink:0 is what makes the row scroll. Without it the keys are squeezed
+     back to the viewport width, coming out as tall ovals and never overflowing,
+     so the scroll has nothing to scroll. */
+.r67-key {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  margin-right: 4px;
+  border-radius: 30px;
+  /* Longhand, and a flat hex, because border-radius is conditional on
+     border-width and border-color both resolving. The native writes this as
+     `3px solid rgba(255,255,255,0.06)`; the shorthand and rgba() were the only
+     two of their kind left in the project, and either failing to parse takes
+     the pill shape down with it and leaves every rect-screen key square. */
+  border-width: 3px;
+  border-style: solid;
+  border-color: #2e2e2e;
+  background-color: #262626;
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: bold;
+  text-align: center;
+}
+.r67-ico {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  margin-right: 4px;
+}
+/* In flow, below the (absolutely positioned) scroll wrapper. The 6px is a
+     nudge, not an anchor — so it has to be margin-top: `top` on a static
+     element is parsed and then ignored. No height: the native lets the 60px
+     artwork plus its 6px padding set the strip's height. */
+.r67-ctl {
+  width: 100%;
+  margin-top: 6px;
+  padding-left: 6px;
+  padding-right: 6px;
+  flex-direction: row;
+  justify-content: center;
+}
+.r67-ctl-lang-ico {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  padding: 6px;
+}
+.r67-ctl-ico {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  padding: 6px;
+  margin-left: 6px;
+}
+.r67-ctl-wide {
+  flex-shrink: 0;
+  width: 94px;
+  height: 60px;
+  padding: 6px;
+  margin-left: 6px;
+}
+.r67-ctl-back {
+  flex-shrink: 0;
+  width: 159px;
+  height: 60px;
+  padding: 6px;
+  margin-left: 6px;
+}
+/* Stands in for a native PNG that only exists for en/cn/jp, at its metrics. */
+.r67-ctl-lang,
+.r67-ctl-pill {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 30px;
+  /* Longhand + flat hex for the same reason as .r67-key above. */
+  border-width: 3px;
+  border-style: solid;
+  border-color: #2e2e2e;
+  background-color: #262626;
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: bold;
+  text-align: center;
+}
+.r67-ctl-pill {
+  margin-left: 6px;
+}
+
+/* --- language picker --- */
+.lang-overlay {
+  background-color: #000000;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.lang-grid {
+  width: 320px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.lang-pill {
+  width: 92px;
+  height: 60px;
+  margin: 4px;
+  color: #ffffff;
+  font-size: 26px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 60px;
+  background-color: #262626;
+  border-radius: 30px;
+  border-width: 3px;
+  border-color: #333333;
+}
+.lang-on {
+  background-color: #0d84ff;
+  border-color: #0d84ff;
+}
+.lang-cancel {
+  width: 160px;
+  height: 52px;
+  margin-top: 14px;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 52px;
+  background-color: #262626;
+  border-radius: 26px;
+  border-width: 3px;
+  border-color: #333333;
+}
+</style>
+
+<script>
+import storage from "@system.storage"
+import device from "@system.device"
+
+// --- Native circle geometry -------------------------------------------
+// Based on the Vela IME's 480px round layout. The S4 reserves the far-left edge
+// for the system back gesture, so interactive controls are additionally kept
+// inside `safeInset`; the OS does not expose an API to disable that dead zone.
+// Everything is multiplied by DESIGN/width at runtime.
+const DESIGN = 480
+const D = {
+  kbH: 321,
+  tbY: 38,
+  tbH: 52,
+  safeInset: 32,
+  toolbarGap: 4,
+  langW: 58,
+  closeRight: 5,
+  closeY: 43,
+  closeS: 42,
+  numW: 40,
+  numH: 22,
+  rowY: [95, 152, 209],
+  rowH: 52,
+  // Row widths are the circle's chord at each row — the widest a row can be.
+  rowW: [464, 438, 368],
+  // Rendered width of the edge artwork (btA/L are 63px images drawn at 60).
+  edgeW: [54, 60, 72],
+  botY: 266,
+  botH: 48,
+  botW: 120,
+  capsX: 119,
+  spaceX: 242,
+  gap: 4,
+  keyFs: 24,
+  labW: 40
+}
+
+// Horizontal centre of the glyph baked into each edge asset, per row and
+// side. The curved tail eats one side of these keys, so the letter is not at
+// the image's midpoint — measured off the original PNGs.
+const GLYPH_CX = [
+  [27.0, 26.0],
+  [35.2, 24.3],
+  [41.5, 29.5]
+]
+// Same measurement for the bottom-left key (shift artwork).
+const BOT_GLYPH_CX = 93.5
+
+// Square/pill screens. Ported from the native IME's `rect` board, which uses
+// one fixed size at every rect width: 255px of board, 60px keys on a 64px
+// pitch, rows indented 0/32/64px inside a horizontal scroll whose viewport is
+// the full screen width. Only the scroll indicator needs the real width.
+const RECT_H = 255
+const RECT_KEY_PITCH = 64
+const RECT_ROW_INDENT = [0, 32, 64]
+// The scroll's own left offset (`.r67-cols { left: 6px }`).
+const RECT_ROW_LEFT = 6
+
+const LAYOUTS = {
+  EN: [
+    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+    ["a", "s", "d", "f", "g", "h", "j", "k", "l"],
+    ["z", "x", "c", "v", "b", "n", "m"]
+  ],
+  AR: [
+    ["ض", "ص", "ث", "ق", "ف", "غ", "ع", "ه", "خ", "ح", "ج", "د", "ذ"],
+    ["ش", "س", "ي", "ب", "ل", "ا", "ت", "ن", "م", "ك", "ط"],
+    ["ئ", "ء", "ؤ", "ر", "ى", "ة", "و", "ز", "ظ"]
+  ],
+  RU: [
+    ["й", "ц", "у", "к", "е", "н", "г", "ш", "щ", "з", "х", "ъ"],
+    ["ф", "ы", "в", "а", "п", "р", "о", "л", "д", "ж", "э"],
+    ["я", "ч", "с", "м", "и", "т", "ь", "б", "ю", "ё"]
+  ],
+  ES: [
+    ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
+    ["a", "s", "d", "f", "g", "h", "j", "k", "l", "ñ"],
+    ["z", "x", "c", "v", "b", "n", "m"]
+  ],
+  DE: [
+    ["q", "w", "e", "r", "t", "z", "u", "i", "o", "p", "ü"],
+    ["a", "s", "d", "f", "g", "h", "j", "k", "l", "ö", "ä"],
+    ["y", "x", "c", "v", "b", "n", "m", "ß"]
+  ],
+  FR: [
+    ["a", "z", "e", "r", "t", "y", "u", "i", "o", "p"],
+    ["q", "s", "d", "f", "g", "h", "j", "k", "l", "m"],
+    ["w", "x", "c", "v", "b", "n"]
+  ]
+}
+
+const SYM_ROWS = [
+  ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+  ["@", "#", "$", "%", "&", "*", "-", "+", "(", ")"],
+  ["!", '"', "'", ":", ";", "/", "?", ",", "."]
+]
+
+// Accented characters that sit on the digit row of a physical layout rather
+// than on a letter key. They ride in the symbols layer so the letter rows
+// stay roomy — there is no long-press on this keyboard to reach them.
+const SYM_ROW3 = {
+  FR: ["é", "è", "ç", "à", "ù", "!", "?", ",", "."],
+  ES: ["¿", "¡", "!", "?", ":", ";", ",", ".", "'"]
+}
+
+// Scripts without letter case: no shift key, and a script-specific comma
+// takes the slot instead.
+const CASELESS = {AR: "،"}
+
+export default {
+  props: {
+    isVisible: {default: false},
+    // Label of the Cancel button in the language picker. The keyboard has no
+    // other UI copy, so it takes this as a prop instead of pulling in an
+    // i18n module. Pass a translated string to localise it.
+    cancelLabel: {default: "Cancel"}
+  },
+
+  data: {
+    screenW: 466,
+    isCircle: true,
+    layoutReady: false,
+    currentLang: "EN",
+    langCodes: ["EN", "AR", "ES", "DE", "RU", "FR"],
+    isCaps: false,
+    isSymbols: false,
+    isLangMenuOpen: false,
+    capsMode: "off",
+    commaChar: ",",
+    rLangLabel: "En",
+
+    // Circle rows are split into edge/middle keys; square screens use the
+    // whole row untouched.
+    rows: [[], [], []],
+    mids: [[], [], []],
+    edgeL: ["", "", ""],
+    edgeR: ["", "", ""],
+
+    kbH: 312,
+    gap: 4,
+    labW: 39,
+    rowH: 50,
+    tbY: 37,
+    tbH: 50,
+    tbFs: 24,
+    langX: 31,
+    langW: 56,
+    barX: 91,
+    barW: 284,
+    delX: 379,
+    closeX: 329,
+    closeY: 42,
+    closeS: 41,
+    numX: 214,
+    numY: 52,
+    numW: 39,
+    numH: 21,
+    rowY: [92, 148, 203],
+    rowX: [31, 33, 56],
+    rowW: [404, 400, 354],
+    edgeW: [52, 58, 70],
+    keyW: [33, 36, 38],
+    keyFs: [23, 23, 23],
+    labL: [6, 14, 20],
+    labR: [357, 346, 293],
+    botY: 258,
+    botH: 47,
+    botW: 117,
+    capsX: 116,
+    spaceX: 235,
+    botLabX: 187,
+
+    // Square/pill board. Fixed at the native's 255px; the only thing that
+    // tracks the screen is the scroll indicator's resting value.
+    rectH: RECT_H,
+    rPercent: 52,
+    rBase: 52,
+    rScrollMax: 300
+  },
+
+  onInit() {
+    // Screen detection is the critical path. Do not serialize it behind a
+    // flash-storage read; KBD_LANG can update the already-correct board later.
+    this.detectScreen()
+    storage.get({
+      key: "KBD_LANG",
+      success: (data) => {
+        if (data && this.langCodes.indexOf(data) >= 0) this.currentLang = data
+        if (this.layoutReady) this.applyLayout()
+      },
+      fail: () => {}
+    })
+  },
+
+  // The host toggles us with `show`, so this instance is never re-created and
+  // onInit never runs again. The language picker must not survive a hide, or
+  // reopening the keyboard lands on the picker instead of the keys.
+  onIsVisibleChange(newValue) {
+    if (!newValue) this.isLangMenuOpen = false
+  },
+
+  detectScreen() {
+    device.getInfo({
+      success: (info) => {
+        const w = info && (info.screenWidth || info.windowWidth)
+        if (w > 0) this.screenW = w
+        const shape = info && info.screenShape
+        this.isCircle = shape !== "rect" && shape !== "pill-shaped"
+        this.applyLayout()
+      },
+      fail: () => {
+        this.isCircle = true
+        this.applyLayout()
+      }
+    })
+  },
+
+  // Recompute every measurement from the detected width, then publish the
+  // keyboard's height so the host can park its input bar above it.
+  applyLayout() {
+    this.syncRows()
+    this.computeLayout()
+    this.kbH = this.isCircle ? Math.round(D.kbH * this.scale()) : this.rectH
+    this.layoutReady = true
+    this.$emit("heightchange", {value: this.kbH})
+  },
+
+  scale() {
+    return this.screenW / DESIGN
+  },
+
+  // Split each row into a left edge key, a run of plain middle keys, and a
+  // right edge key. The native board bakes its edge letters into the PNGs,
+  // which is what pins it to English; here the artwork is blank and the
+  // letter is drawn on top, so any layout can use the same shapes.
+  syncRows() {
+    let rows
+    if (this.isSymbols) {
+      const extra = SYM_ROW3[this.currentLang]
+      rows = extra ? [SYM_ROWS[0], SYM_ROWS[1], extra] : SYM_ROWS
+    } else {
+      const base = LAYOUTS[this.currentLang] || LAYOUTS.EN
+      const upper = this.isCaps && !CASELESS[this.currentLang]
+      // Some letters have no single-character uppercase form ("ß" uppercases
+      // to "SS"), which would render a two-glyph key and insert two
+      // characters per press. Those keep their lowercase form when shifted.
+      rows = base.map((row) =>
+        upper
+          ? row.map((c) => {
+              const u = c.toUpperCase()
+              return u.length === 1 ? u : c
+            })
+          : row
+      )
+    }
+
+    const mids = []
+    const edgeL = []
+    const edgeR = []
+    for (let i = 0; i < 3; i++) {
+      const row = rows[i]
+      edgeL.push(row[0])
+      edgeR.push(row[row.length - 1])
+      mids.push(row.slice(1, -1))
+    }
+    this.rows = rows
+    this.mids = mids
+    this.edgeL = edgeL
+    this.edgeR = edgeR
+
+    const caseless = !!CASELESS[this.currentLang]
+    this.capsMode = this.isSymbols || caseless ? "none" : this.isCaps ? "on" : "off"
+    this.commaChar = CASELESS[this.currentLang] || ","
+    // The rect board shows the language as "En"/"Ar" rather than the round
+    // board's all-caps pill, matching the native square IME.
+    this.rLangLabel = this.currentLang.charAt(0) + this.currentLang.charAt(1).toLowerCase()
+  },
+
+  computeLayout() {
+    const s = this.scale()
+    const px = (v) => Math.round(v * s)
+
+    this.gap = D.gap
+    this.labW = px(D.labW)
+    this.rowH = px(D.rowH)
+    this.tbY = px(D.tbY)
+    this.tbH = px(D.tbH)
+    this.tbFs = px(D.keyFs)
+    const safeInset = px(D.safeInset)
+    const toolbarGap = px(D.toolbarGap)
+    this.langX = safeInset
+    this.langW = px(D.langW)
+    this.barX = this.langX + this.langW + toolbarGap
+    this.delX = this.screenW - safeInset - this.langW
+    this.barW = this.delX - toolbarGap - this.barX
+    this.closeY = px(D.closeY)
+    this.closeS = px(D.closeS)
+    this.closeX = this.barX + this.barW - this.closeS - px(D.closeRight)
+    this.numW = px(D.numW)
+    this.numH = px(D.numH)
+    this.numX = this.barX + Math.round((this.barW - this.numW) / 2)
+    this.numY = this.tbY + Math.round((this.tbH - this.numH) / 2)
+
+    this.botY = px(D.botY)
+    this.botH = px(D.botH)
+    this.botW = px(D.botW)
+    this.capsX = px(D.capsX)
+    this.spaceX = px(D.spaceX)
+    this.botLabX = this.capsX + px(BOT_GLYPH_CX) - Math.round(this.labW / 2)
+
+    const rowY = []
+    const rowX = []
+    const rowW = []
+    const edgeW = []
+    const keyW = []
+    const keyFs = []
+    const labL = []
+    const labR = []
+    const arabic = this.currentLang === "AR" && !this.isSymbols
+
+    for (let i = 0; i < 3; i++) {
+      // Pull bezel keys inside the S4's system back-swipe capture strip. Rows
+      // that were already farther inward keep their native chord unchanged.
+      const chord = Math.min(px(D.rowW[i]), this.screenW - 2 * safeInset)
+      const edge = px(D.edgeW[i])
+      const nMid = Math.max(1, this.mids[i].length)
+      // Edge keys keep their native width; the middle keys absorb whatever
+      // the row length demands, so a 12-key Cyrillic row still fits the chord.
+      // The fitting width always wins over any minimum — a row wider than its
+      // chord would run into the bezel curve and get clipped, so a narrow key
+      // beats an invisible one on smaller round screens.
+      const avail = chord - 2 * edge - D.gap
+      const kw = Math.max(12, Math.floor(avail / nMid) - D.gap)
+      const used = 2 * edge + D.gap + nMid * (kw + D.gap)
+      const left = Math.floor((this.screenW - used) / 2)
+
+      rowY.push(px(D.rowY[i]))
+      rowX.push(left)
+      rowW.push(used)
+      edgeW.push(edge)
+      keyW.push(kw)
+
+      const fs = Math.min(px(D.keyFs), Math.max(17, Math.round(kw * 0.72)))
+      keyFs.push(arabic ? fs + 1 : fs)
+
+      const half = Math.round(this.labW / 2)
+      labL.push(Math.round(GLYPH_CX[i][0] * s) - half)
+      labR.push(used - edge + Math.round(GLYPH_CX[i][1] * s) - half)
+    }
+
+    this.rowY = rowY
+    this.rowX = rowX
+    this.rowW = rowW
+    this.edgeW = edgeW
+    this.keyW = keyW
+    this.keyFs = keyFs
+    this.labL = labL
+    this.labR = labR
+
+    this.computeRectLayout()
+  },
+
+  // The square/pill board has no geometry to compute — every measurement is a
+  // constant in the CSS, exactly as the native ships it. The one thing that
+  // has to know the screen is the scroll indicator: it rests at the fraction
+  // of the widest row that is actually visible, and fills to 100% when that
+  // row is scrolled to its end. The native hardcodes this as `52.8 +
+  // scrollX / 636 * 100`, which is that same ratio for a 336px screen and a
+  // 646px English row; deriving it keeps it honest on a wider watch or a
+  // 13-key Russian row.
+  computeRectLayout() {
+    if (!this.rows[0].length) return
+
+    // Row 3 carries two extra keys after the letters (space, close).
+    const widest = [0, 1, 2].reduce((max, i) => {
+      const keys = this.rows[i].length + (i === 2 ? 2 : 0)
+      return Math.max(max, RECT_ROW_INDENT[i] + keys * RECT_KEY_PITCH)
+    }, 0)
+    const contentW = RECT_ROW_LEFT + widest
+
+    this.rScrollMax = Math.max(1, contentW - this.screenW)
+    this.rPercent = Math.min(100, Math.round((this.screenW / contentW) * 100))
+    this.rBase = this.rPercent
+    this.rectH = RECT_H
+  },
+
+  // `<scroll>` draws no scrollbar of its own, so the progress bar under the
+  // rows stands in for one.
+  onRectScroll(e) {
+    const x = (e && e.scrollX) || 0
+    const base = this.rBase || 0
+    const p = base + (x / this.rScrollMax) * (100 - base)
+    this.rPercent = Math.round(p > 100 ? 100 : p)
+  },
+
+  handleKey(char) {
+    if (char) this.$emit("keypress", {value: char})
+  },
+
+  handleAction(action) {
+    if (action === "delete") {
+      this.$emit("delete")
+    } else if (action === "space") {
+      this.$emit("keypress", {value: " "})
+    } else if (action === "caps") {
+      this.toggleCaps()
+    } else if (action === "mode") {
+      this.isSymbols = !this.isSymbols
+      this.isCaps = false
+      this.applyLayout()
+    } else if (action === "lang") {
+      this.isLangMenuOpen = true
+    } else if (action === "close") {
+      this.isLangMenuOpen = false
+      this.$emit("close")
+    }
+  },
+
+  toggleCaps() {
+    if (this.capsMode === "none") return
+    this.isCaps = !this.isCaps
+    this.applyLayout()
+  },
+
+  handleLangClose() {
+    this.isLangMenuOpen = false
+  },
+
+  selectLang(code) {
+    this.currentLang = code
+    this.isCaps = false
+    this.isSymbols = false
+    this.isLangMenuOpen = false
+    this.applyLayout()
+    storage.set({key: "KBD_LANG", value: code})
+  }
+}
+</script>
